@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "dkX4J-Yq-iRSQVD683REN"
+uri = "file://artifacts/statuscatch/assets/images/icon.png"
+type = "image"
+title = "generated_image"
