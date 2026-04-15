@@ -1,10 +1,24 @@
-import React, { useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import React from "react";
+import {
+  Alert,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAuth } from "@/context/AuthContext";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+
+const WEB_APP_URL = process.env.EXPO_PUBLIC_API_URL || "https://statuscatch.up.railway.app";
 
 function SettingRow({
   label,
@@ -47,72 +61,75 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function SettingsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { subscriptions, alertRules } = useApp();
-  const [emailEnabled, setEmailEnabled] = useState(true);
-  const [inAppEnabled, setInAppEnabled] = useState(true);
+  const { logout } = useAuth();
+  const { alertRules } = useApp();
+
+  function confirmLogout() {
+    Alert.alert("Disconnect", "Remove your API token and disconnect from StatusCatch?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Disconnect",
+        style: "destructive",
+        onPress: () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          logout();
+        },
+      },
+    ]);
+  }
+
+  function openWebApp() {
+    Linking.openURL(`${WEB_APP_URL}/dashboard/settings`);
+  }
 
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={[
         styles.content,
-        {
-          paddingBottom: insets.bottom + 110,
-          paddingTop: Platform.OS === "web" ? 67 : 20,
-        },
+        { paddingBottom: insets.bottom + 110, paddingTop: Platform.OS === "web" ? 67 : 20 },
       ]}
     >
-      <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={[styles.profileAvatar, { backgroundColor: colors.primary + "22" }]}>
-          <Feather name="user" size={30} color={colors.primary} />
+      <View style={[styles.connectedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.statusDot, { backgroundColor: "#22C55E" }]} />
+        <View style={styles.connectedInfo}>
+          <Text style={[styles.connectedLabel, { color: colors.foreground }]}>Connected</Text>
+          <Text style={[styles.connectedUrl, { color: colors.mutedForeground }]}>
+            statuscatch.up.railway.app
+          </Text>
         </View>
-        <View style={styles.profileInfo}>
-          <Text style={[styles.profileName, { color: colors.foreground }]}>IT Operations</Text>
-          <Text style={[styles.profileOrg, { color: colors.mutedForeground }]}>Default Organization</Text>
-        </View>
-        <View style={[styles.planBadge, { backgroundColor: colors.muted }]}>
-          <Text style={[styles.planLabel, { color: colors.mutedForeground }]}>FREE</Text>
-        </View>
+        <Pressable
+          style={[styles.manageBtn, { backgroundColor: colors.muted }]}
+          onPress={openWebApp}
+        >
+          <Feather name="external-link" size={14} color={colors.primary} />
+        </Pressable>
       </View>
 
-      <Section title="MONITORING">
-        <SettingRow label="Subscribed Vendors" value={`${subscriptions.length} vendors`} />
+      <Section title="LOCAL SETTINGS">
         <SettingRow label="Alert Rules" value={`${alertRules.length} rules`} />
-        <SettingRow label="Poll Interval" value="5 min" isLast />
+        <SettingRow label="Data Refresh" value="30 seconds" isLast />
       </Section>
 
-      <Section title="NOTIFICATIONS">
-        <View style={[styles.row, { borderBottomWidth: 1, borderColor: colors.border }]}>
-          <Text style={[styles.rowLabel, { color: colors.foreground }]}>Email Notifications</Text>
-          <Switch
-            value={emailEnabled}
-            onValueChange={setEmailEnabled}
-            trackColor={{ false: colors.muted, true: colors.primary + "88" }}
-            thumbColor={emailEnabled ? colors.primary : colors.mutedForeground}
-          />
-        </View>
-        <View style={[styles.row, { borderBottomWidth: 1, borderColor: colors.border }]}>
-          <Text style={[styles.rowLabel, { color: colors.foreground }]}>In-App Alerts</Text>
-          <Switch
-            value={inAppEnabled}
-            onValueChange={setInAppEnabled}
-            trackColor={{ false: colors.muted, true: colors.primary + "88" }}
-            thumbColor={inAppEnabled ? colors.primary : colors.mutedForeground}
-          />
-        </View>
-        <SettingRow label="Email Digest" value="Immediate" isLast />
-      </Section>
-
-      <Section title="FEED SOURCES">
-        <SettingRow label="RSS / ATOM Feeds" value="Enabled" />
-        <SettingRow label="Webhook Support" value="Configured" isLast />
+      <Section title="ACCOUNT">
+        <SettingRow label="Manage Account" onPress={openWebApp} />
+        <SettingRow label="Manage Vendors" onPress={() => Linking.openURL(`${WEB_APP_URL}/dashboard/vendors`)} />
+        <SettingRow label="Web Dashboard" onPress={() => Linking.openURL(`${WEB_APP_URL}/dashboard`)} isLast />
       </Section>
 
       <Section title="ABOUT">
         <SettingRow label="Version" value="1.0.0" />
-        <SettingRow label="StatusCatch Web" value="statuscatch.io" />
-        <SettingRow label="Support" value="help@statuscatch.io" isLast />
+        <SettingRow label="Platform" value={Platform.OS === "ios" ? "iOS" : Platform.OS === "android" ? "Android" : "Web"} />
+        <SettingRow label="StatusCatch Web" value="statuscatch.up.railway.app" isLast />
       </Section>
+
+      <Pressable
+        style={[styles.logoutBtn, { borderColor: colors.destructive }]}
+        onPress={confirmLogout}
+      >
+        <Feather name="log-out" size={18} color={colors.destructive} />
+        <Text style={[styles.logoutText, { color: colors.destructive }]}>Disconnect</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -120,31 +137,26 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: 16 },
-  profileCard: {
+  connectedCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    padding: 18,
-    borderRadius: 16,
+    gap: 12,
+    padding: 16,
+    borderRadius: 14,
     borderWidth: 1,
     marginBottom: 24,
   },
-  profileAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  statusDot: { width: 10, height: 10, borderRadius: 5 },
+  connectedInfo: { flex: 1 },
+  connectedLabel: { fontSize: 16, fontWeight: "700" },
+  connectedUrl: { fontSize: 12, marginTop: 2 },
+  manageBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
   },
-  profileInfo: { flex: 1 },
-  profileName: { fontSize: 17, fontWeight: "700" },
-  profileOrg: { fontSize: 13, marginTop: 2 },
-  planBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  planLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
   section: { marginBottom: 24 },
   sectionTitle: {
     fontSize: 11,
@@ -164,4 +176,15 @@ const styles = StyleSheet.create({
   rowLabel: { fontSize: 15, flex: 1 },
   rowRight: { flexDirection: "row", alignItems: "center", gap: 6 },
   rowValue: { fontSize: 14 },
+  logoutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  logoutText: { fontSize: 16, fontWeight: "600" },
 });

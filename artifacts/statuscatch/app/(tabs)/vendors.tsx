@@ -1,86 +1,60 @@
-import * as Haptics from "expo-haptics";
-import React, { useMemo, useState } from "react";
+import { Feather } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
+import React from "react";
 import {
+  ActivityIndicator,
   FlatList,
+  Linking,
   Platform,
   Pressable,
-  ScrollView,
+  RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
 
 import { StatusBadge } from "@/components/StatusBadge";
-import { useApp } from "@/context/AppContext";
-import { CATEGORY_LABELS, VENDOR_CATALOG, Vendor, VendorCategory } from "@/constants/vendors";
+import { CATEGORY_LABELS } from "@/constants/vendors";
+import type { VendorStatus } from "@/constants/vendors";
 import { useColors } from "@/hooks/useColors";
+import { fetchVendors, getVendorColor, getVendorInitial, getVendorName } from "@/lib/api";
+import type { ApiVendor } from "@/lib/api";
 
-const CATEGORIES: { key: VendorCategory | "ALL"; label: string }[] = [
-  { key: "ALL", label: "All" },
-  { key: "COMMUNICATION", label: "Communication" },
-  { key: "CLOUD", label: "Cloud" },
-  { key: "PAYMENTS", label: "Payments" },
-  { key: "SECURITY", label: "Security" },
-  { key: "OBSERVABILITY", label: "Observability" },
-  { key: "PRODUCTIVITY", label: "Productivity" },
-  { key: "DEVELOPER_TOOLS", label: "Dev Tools" },
-  { key: "OTHER", label: "Other" },
-];
+const WEB_APP_URL = process.env.EXPO_PUBLIC_API_URL || "https://statuscatch.up.railway.app";
 
-function VendorRow({ vendor }: { vendor: Vendor }) {
+function VendorRow({ vendor }: { vendor: ApiVendor }) {
   const colors = useColors();
-  const { isSubscribed, subscribe, unsubscribe } = useApp();
-  const subscribed = isSubscribed(vendor.id);
-
-  function toggle() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (subscribed) {
-      unsubscribe(vendor.id);
-    } else {
-      subscribe(vendor.id);
-    }
-  }
+  const name = getVendorName(vendor);
+  const initial = getVendorInitial(vendor);
+  const brandColor = getVendorColor(vendor);
+  const category = vendor.vendorCatalog?.category ?? "OTHER";
+  const incidentCount = vendor._count?.incidents ?? 0;
 
   return (
     <View style={[styles.vendorRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View
-        style={[
-          styles.avatar,
-          { backgroundColor: vendor.logoColor + "22", borderColor: vendor.logoColor + "44" },
-        ]}
+        style={[styles.avatar, { backgroundColor: brandColor + "22", borderColor: brandColor + "44" }]}
       >
-        <Text style={[styles.avatarText, { color: vendor.logoColor }]}>{vendor.logoChar}</Text>
+        <Text style={[styles.avatarText, { color: brandColor }]}>{initial}</Text>
       </View>
       <View style={styles.vendorInfo}>
-        <Text style={[styles.vendorName, { color: colors.foreground }]}>{vendor.name}</Text>
+        <Text style={[styles.vendorName, { color: colors.foreground }]}>{name}</Text>
         <View style={styles.metaRow}>
           <Text style={[styles.category, { color: colors.mutedForeground }]}>
-            {CATEGORY_LABELS[vendor.category]}
+            {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] ?? category}
           </Text>
-          <Text style={[styles.dot, { color: colors.mutedForeground }]}> · </Text>
-          <StatusBadge status={vendor.status} />
+          {incidentCount > 0 && (
+            <>
+              <Text style={[styles.dot, { color: colors.mutedForeground }]}> · </Text>
+              <Text style={[styles.incidentCount, { color: colors.mutedForeground }]}>
+                {incidentCount} incident{incidentCount !== 1 ? "s" : ""}
+              </Text>
+            </>
+          )}
         </View>
       </View>
-      <Pressable
-        testID={`subscribe-${vendor.id}`}
-        style={[
-          styles.subscribeBtn,
-          {
-            backgroundColor: subscribed ? colors.primary + "22" : colors.muted,
-            borderColor: subscribed ? colors.primary : colors.border,
-          },
-        ]}
-        onPress={toggle}
-      >
-        {subscribed ? (
-          <Feather name="check" size={15} color={colors.primary} />
-        ) : (
-          <Feather name="plus" size={15} color={colors.mutedForeground} />
-        )}
-      </Pressable>
+      <StatusBadge status={vendor.currentStatus as VendorStatus} />
     </View>
   );
 }
@@ -88,18 +62,18 @@ function VendorRow({ vendor }: { vendor: Vendor }) {
 export default function VendorsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<VendorCategory | "ALL">("ALL");
 
-  const filtered = useMemo(
-    () =>
-      VENDOR_CATALOG.filter((v) => {
-        const matchSearch = v.name.toLowerCase().includes(search.toLowerCase());
-        const matchCat = category === "ALL" || v.category === category;
-        return matchSearch && matchCat;
-      }),
-    [search, category]
-  );
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
+    queryKey: ["vendors"],
+    queryFn: fetchVendors,
+    refetchInterval: 30000,
+  });
+
+  const vendors = data?.vendors ?? [];
+
+  function openWebApp() {
+    Linking.openURL(`${WEB_APP_URL}/dashboard/vendors`);
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -113,63 +87,51 @@ export default function VendorsScreen() {
           },
         ]}
       >
-        <View style={[styles.searchBox, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-          <Feather name="search" size={16} color={colors.mutedForeground} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Search vendors..."
-            placeholderTextColor={colors.mutedForeground}
-            value={search}
-            onChangeText={setSearch}
-          />
-          {search.length > 0 && (
-            <Pressable onPress={() => setSearch("")}>
-              <Feather name="x" size={15} color={colors.mutedForeground} />
-            </Pressable>
-          )}
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.catScroll}
-        >
-          {CATEGORIES.map((cat) => (
-            <Pressable
-              key={cat.key}
-              style={[
-                styles.catPill,
-                { backgroundColor: category === cat.key ? colors.primary : colors.muted },
-              ]}
-              onPress={() => setCategory(cat.key)}
-            >
-              <Text
-                style={[
-                  styles.catLabel,
-                  {
-                    color:
-                      category === cat.key ? colors.primaryForeground : colors.mutedForeground,
-                  },
-                ]}
-              >
-                {cat.label}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+        <Text style={[styles.topBarInfo, { color: colors.mutedForeground }]}>
+          {vendors.length} vendor subscription{vendors.length !== 1 ? "s" : ""}
+        </Text>
+        <Pressable style={styles.manageBtn} onPress={openWebApp}>
+          <Feather name="external-link" size={14} color={colors.primary} />
+          <Text style={[styles.manageBtnText, { color: colors.primary }]}>Manage</Text>
+        </Pressable>
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <VendorRow vendor={item} />}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 110 }]}
-        scrollEnabled={filtered.length > 0}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No vendors found</Text>
-          </View>
-        }
-      />
+      {isLoading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : isError ? (
+        <View style={styles.centered}>
+          <Feather name="wifi-off" size={36} color={colors.mutedForeground} />
+          <Text style={[styles.errorText, { color: colors.foreground }]}>Connection Error</Text>
+          <Pressable style={[styles.retryBtn, { backgroundColor: colors.primary }]} onPress={() => refetch()}>
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <FlatList
+          data={vendors}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <VendorRow vendor={item} />}
+          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 110 }]}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} tintColor={colors.primary} />
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Feather name="server" size={44} color={colors.mutedForeground} />
+              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No vendors yet</Text>
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                Add vendor subscriptions from the StatusCatch web app
+              </Text>
+              <Pressable style={[styles.webBtn, { backgroundColor: colors.primary }]} onPress={openWebApp}>
+                <Feather name="external-link" size={16} color="#fff" />
+                <Text style={styles.webBtnText}>Open Web App</Text>
+              </Pressable>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -177,30 +139,18 @@ export default function VendorsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   topBar: {
-    borderBottomWidth: 1,
-    paddingBottom: 0,
-  },
-  searchBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginHorizontal: 12,
-    marginBottom: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
   },
-  searchInput: { flex: 1, fontSize: 15 },
-  catScroll: { paddingHorizontal: 12, paddingBottom: 12, gap: 6 },
-  catPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginRight: 4,
-  },
-  catLabel: { fontSize: 13, fontWeight: "600" },
+  topBarInfo: { fontSize: 13 },
+  manageBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
+  manageBtnText: { fontSize: 14, fontWeight: "600" },
   list: { padding: 12 },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
   vendorRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -224,14 +174,21 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: "row", alignItems: "center" },
   category: { fontSize: 12 },
   dot: { fontSize: 12 },
-  subscribeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
+  incidentCount: { fontSize: 12 },
+  empty: { padding: 60, alignItems: "center", gap: 10 },
+  emptyTitle: { fontSize: 18, fontWeight: "600", marginTop: 8 },
+  emptyText: { fontSize: 14, textAlign: "center" },
+  webBtn: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 8,
   },
-  empty: { padding: 60, alignItems: "center" },
-  emptyText: { fontSize: 15 },
+  webBtnText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  errorText: { fontSize: 16, fontWeight: "600" },
+  retryBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
+  retryBtnText: { color: "#fff", fontSize: 15, fontWeight: "600" },
 });
