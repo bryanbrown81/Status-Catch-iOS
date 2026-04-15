@@ -14,9 +14,22 @@
       "backgroundColor": "#0B0F1A"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.statuscatch.mobile",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["statuscatch"]
+          }
+        ],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false
+        }
+      }
     },
-    "android": {},
+    "android": {
+      "package": "com.statuscatch.mobile"
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
@@ -24,7 +37,7 @@
       [
         "expo-router",
         {
-          "origin": "https://replit.com/"
+          "origin": "https://statuscatch.up.railway.app/"
         }
       ],
       "expo-font",
