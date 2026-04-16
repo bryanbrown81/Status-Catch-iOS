@@ -2,7 +2,7 @@
   "expo": {
     "name": "StatusCatch",
     "slug": "statuscatch",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "statuscatch",
@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.statuscatch.mobile",
+      "buildNumber": "2",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
