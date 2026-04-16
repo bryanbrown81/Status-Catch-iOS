@@ -14,6 +14,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useRouter } from "expo-router";
+
 import { StatusBadge } from "@/components/StatusBadge";
 import { CATEGORY_LABELS } from "@/constants/vendors";
 import type { VendorStatus } from "@/constants/vendors";
@@ -121,6 +123,7 @@ function VendorRow({ vendor }: { vendor: ApiVendor }) {
 export default function DashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["dashboard"],
@@ -220,11 +223,17 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Pressable
+            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/(tabs)/vendors")}
+          >
             <Text style={[styles.statNum, { color: "#22C55E" }]}>{summary?.operationalCount ?? 0}</Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Operational</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          </Pressable>
+          <Pressable
+            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push({ pathname: "/(tabs)/incidents", params: { filter: "active" } })}
+          >
             <Text
               style={[
                 styles.statNum,
@@ -234,11 +243,14 @@ export default function DashboardScreen() {
               {summary?.activeIncidentsCount ?? 0}
             </Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Active Incidents</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          </Pressable>
+          <Pressable
+            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/(tabs)/vendors")}
+          >
             <Text style={[styles.statNum, { color: colors.primary }]}>{summary?.totalVendors ?? 0}</Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Vendors</Text>
-          </View>
+          </Pressable>
         </View>
 
         {activeIncidents.length > 0 && (

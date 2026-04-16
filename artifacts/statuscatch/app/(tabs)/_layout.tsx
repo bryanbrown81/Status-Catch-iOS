@@ -93,6 +93,7 @@ function ClassicTabLayout() {
         name="incidents"
         options={{
           title: "Incidents",
+          headerShown: false,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="exclamationmark.triangle.fill" tintColor={color} size={22} />

@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -97,7 +98,14 @@ function IncidentCard({ incident }: { incident: ApiIncident }) {
 export default function IncidentsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ filter?: string }>();
   const [filter, setFilter] = useState<Filter>("all");
+
+  useEffect(() => {
+    if (params.filter === "active" || params.filter === "resolved") {
+      setFilter(params.filter);
+    }
+  }, [params.filter]);
 
   const queryParams = {
     limit: 50,
@@ -117,33 +125,36 @@ export default function IncidentsScreen() {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <View
         style={[
-          styles.filterBar,
+          styles.headerArea,
           {
             backgroundColor: colors.card,
             borderBottomColor: colors.border,
-            paddingTop: Platform.OS === "web" ? 67 : 12,
+            paddingTop: Platform.OS === "web" ? 67 : insets.top + 12,
           },
         ]}
       >
-        {FILTERS.map((f) => (
-          <Pressable
-            key={f.key}
-            style={[
-              styles.filterPill,
-              { backgroundColor: filter === f.key ? colors.primary : colors.muted },
-            ]}
-            onPress={() => setFilter(f.key)}
-          >
-            <Text
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Incidents</Text>
+        <View style={styles.filterRow}>
+          {FILTERS.map((f) => (
+            <Pressable
+              key={f.key}
               style={[
-                styles.filterLabel,
-                { color: filter === f.key ? colors.primaryForeground : colors.mutedForeground },
+                styles.filterPill,
+                { backgroundColor: filter === f.key ? colors.primary : colors.muted },
               ]}
+              onPress={() => setFilter(f.key)}
             >
-              {f.label}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                style={[
+                  styles.filterLabel,
+                  { color: filter === f.key ? colors.primaryForeground : colors.mutedForeground },
+                ]}
+              >
+                {f.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
 
       {isLoading ? (
@@ -183,12 +194,15 @@ export default function IncidentsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  filterBar: {
-    flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 14,
+  headerArea: {
+    paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
+  },
+  headerTitle: { fontSize: 22, fontWeight: "700", letterSpacing: -0.5, marginBottom: 12 },
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
   },
   filterPill: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
   filterLabel: { fontSize: 14, fontWeight: "600" },
