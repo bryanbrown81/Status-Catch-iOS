@@ -222,35 +222,53 @@ export default function DashboardScreen() {
           </Text>
         </View>
 
-        <View style={styles.statsRow}>
-          <Pressable
-            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push("/(tabs)/vendors")}
-          >
-            <Text style={[styles.statNum, { color: "#22C55E" }]}>{summary?.operationalCount ?? 0}</Text>
-            <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Operational</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push({ pathname: "/(tabs)/incidents", params: { filter: "active" } })}
-          >
-            <Text
-              style={[
-                styles.statNum,
-                { color: (summary?.activeIncidentsCount ?? 0) > 0 ? "#EF4444" : colors.foreground },
-              ]}
+        <View style={styles.statsGrid}>
+          <View style={styles.statsRow}>
+            <Pressable
+              style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push("/(tabs)/vendors")}
             >
-              {summary?.activeIncidentsCount ?? 0}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Active Incidents</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push("/(tabs)/vendors")}
-          >
-            <Text style={[styles.statNum, { color: colors.primary }]}>{summary?.totalVendors ?? 0}</Text>
-            <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Vendors</Text>
-          </Pressable>
+              <Text style={[styles.statNum, { color: "#22C55E" }]}>{summary?.operationalCount ?? 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Operational</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push({ pathname: "/(tabs)/incidents", params: { filter: "active" } })}
+            >
+              <Text
+                style={[
+                  styles.statNum,
+                  { color: (summary?.activeIncidentsCount ?? 0) > 0 ? "#EF4444" : colors.foreground },
+                ]}
+              >
+                {summary?.activeIncidentsCount ?? 0}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Active Incidents</Text>
+            </Pressable>
+          </View>
+          <View style={styles.statsRow}>
+            <Pressable
+              style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push("/(tabs)/vendors")}
+            >
+              <Text style={[styles.statNum, { color: colors.primary }]}>{summary?.totalVendors ?? 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Vendors</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push({ pathname: "/(tabs)/incidents", params: { filter: "active" } })}
+            >
+              <Text
+                style={[
+                  styles.statNum,
+                  { color: (summary?.activeMaintenanceCount ?? 0) > 0 ? "#F59E0B" : colors.foreground },
+                ]}
+              >
+                {summary?.activeMaintenanceCount ?? 0}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Maintenance</Text>
+            </Pressable>
+          </View>
         </View>
 
         {activeIncidents.length > 0 && (
@@ -317,7 +335,8 @@ const styles = StyleSheet.create({
   },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   statusLabel: { fontSize: 14, fontWeight: "600" },
-  statsRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
+  statsGrid: { gap: 10, marginBottom: 20 },
+  statsRow: { flexDirection: "row", gap: 10 },
   statCard: { flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, alignItems: "center" },
   statNum: { fontSize: 26, fontWeight: "700" },
   statLabel: { fontSize: 10, marginTop: 3, textAlign: "center" },
