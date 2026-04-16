@@ -18,12 +18,11 @@ import { useColors } from "@/hooks/useColors";
 import { fetchIncidents, getIncidentVendorName } from "@/lib/api";
 import type { ApiIncident } from "@/lib/api";
 
-type Filter = "all" | "active" | "resolved";
+type IncidentType = "INCIDENT" | "MAINTENANCE";
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "active", label: "Active" },
-  { key: "resolved", label: "Resolved" },
+const TYPE_OPTIONS: { key: IncidentType; label: string }[] = [
+  { key: "INCIDENT", label: "Incidents" },
+  { key: "MAINTENANCE", label: "Maintenance" },
 ];
 
 const IMPACT_COLORS: Record<string, string> = {
@@ -98,23 +97,27 @@ function IncidentCard({ incident }: { incident: ApiIncident }) {
 export default function IncidentsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ filter?: string }>();
-  const [filter, setFilter] = useState<Filter>("all");
+  const params = useLocalSearchParams<{ type?: string; activeOnly?: string }>();
+  const [type, setType] = useState<IncidentType>("INCIDENT");
+  const [activeOnly, setActiveOnly] = useState(false);
 
   useEffect(() => {
-    if (params.filter === "active" || params.filter === "resolved") {
-      setFilter(params.filter);
+    if (params.type === "INCIDENT" || params.type === "MAINTENANCE") {
+      setType(params.type);
     }
-  }, [params.filter]);
+    if (params.activeOnly === "true") {
+      setActiveOnly(true);
+    }
+  }, [params.type, params.activeOnly]);
 
   const queryParams = {
     limit: 50,
-    ...(filter === "active" ? { active: true } : {}),
-    ...(filter === "resolved" ? { status: "RESOLVED" } : {}),
+    type,
+    ...(activeOnly ? { active: true } : {}),
   };
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
-    queryKey: ["incidents", filter],
+    queryKey: ["incidents", type, activeOnly],
     queryFn: () => fetchIncidents(queryParams),
     refetchInterval: 30000,
   });
@@ -135,25 +138,46 @@ export default function IncidentsScreen() {
       >
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Incidents</Text>
         <View style={styles.filterRow}>
-          {FILTERS.map((f) => (
-            <Pressable
-              key={f.key}
-              style={[
-                styles.filterPill,
-                { backgroundColor: filter === f.key ? colors.primary : colors.muted },
-              ]}
-              onPress={() => setFilter(f.key)}
-            >
-              <Text
+          <View style={styles.typeRow}>
+            {TYPE_OPTIONS.map((t) => (
+              <Pressable
+                key={t.key}
                 style={[
-                  styles.filterLabel,
-                  { color: filter === f.key ? colors.primaryForeground : colors.mutedForeground },
+                  styles.filterPill,
+                  { backgroundColor: type === t.key ? colors.primary : colors.muted },
                 ]}
+                onPress={() => setType(t.key)}
               >
-                {f.label}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  style={[
+                    styles.filterLabel,
+                    { color: type === t.key ? colors.primaryForeground : colors.mutedForeground },
+                  ]}
+                >
+                  {t.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          <Pressable
+            style={[
+              styles.activeToggle,
+              {
+                backgroundColor: activeOnly ? colors.primary : colors.muted,
+                borderColor: activeOnly ? colors.primary : colors.border,
+              },
+            ]}
+            onPress={() => setActiveOnly((v) => !v)}
+          >
+            <Text
+              style={[
+                styles.activeToggleText,
+                { color: activeOnly ? colors.primaryForeground : colors.mutedForeground },
+              ]}
+            >
+              Active Only
+            </Text>
+          </Pressable>
         </View>
       </View>
 
@@ -182,7 +206,9 @@ export default function IncidentsScreen() {
             <View style={styles.empty}>
               <Feather name="check-circle" size={40} color={colors.mutedForeground} />
               <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                {filter === "resolved" ? "No resolved incidents" : "No incidents found"}
+                {type === "MAINTENANCE"
+                  ? activeOnly ? "No active maintenance" : "No maintenance found"
+                  : activeOnly ? "No active incidents" : "No incidents found"}
               </Text>
             </View>
           }
@@ -202,10 +228,23 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 22, fontWeight: "700", letterSpacing: -0.5, marginBottom: 12 },
   filterRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
+  },
+  typeRow: {
+    flexDirection: "row",
     gap: 8,
   },
   filterPill: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
   filterLabel: { fontSize: 14, fontWeight: "600" },
+  activeToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  activeToggleText: { fontSize: 12, fontWeight: "600" },
   list: { padding: 14 },
   centered: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
   card: { padding: 14, borderRadius: 12, borderWidth: 1, borderLeftWidth: 3, marginBottom: 10 },

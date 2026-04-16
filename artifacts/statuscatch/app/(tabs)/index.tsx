@@ -228,12 +228,14 @@ export default function DashboardScreen() {
               style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => router.push("/(tabs)/vendors")}
             >
-              <Text style={[styles.statNum, { color: "#22C55E" }]}>{summary?.operationalCount ?? 0}</Text>
+              <Text style={[styles.statNum, { color: "#22C55E" }]}>
+                {summary?.operationalCount ?? 0}/{summary?.totalVendors ?? 0}
+              </Text>
               <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Operational</Text>
             </Pressable>
             <Pressable
               style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => router.push({ pathname: "/(tabs)/incidents", params: { filter: "active" } })}
+              onPress={() => router.push({ pathname: "/(tabs)/incidents", params: { type: "INCIDENT", activeOnly: "true" } })}
             >
               <Text
                 style={[
@@ -251,12 +253,19 @@ export default function DashboardScreen() {
               style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => router.push("/(tabs)/vendors")}
             >
-              <Text style={[styles.statNum, { color: colors.primary }]}>{summary?.totalVendors ?? 0}</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Vendors</Text>
+              <Text
+                style={[
+                  styles.statNum,
+                  { color: (summary?.outageCount ?? 0) > 0 ? "#F97316" : colors.foreground },
+                ]}
+              >
+                {summary?.outageCount ?? 0}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Outages</Text>
             </Pressable>
             <Pressable
               style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => router.push({ pathname: "/(tabs)/incidents", params: { filter: "active" } })}
+              onPress={() => router.push({ pathname: "/(tabs)/incidents", params: { type: "MAINTENANCE", activeOnly: "true" } })}
             >
               <Text
                 style={[
