@@ -1,9 +1,11 @@
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { SymbolView } from "expo-symbols";
-import React from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -22,6 +24,7 @@ import type { VendorStatus } from "@/constants/vendors";
 import { useColors } from "@/hooks/useColors";
 import {
   fetchDashboard,
+  fetchIncidents,
   getIncidentVendorName,
   getVendorColor,
   getVendorInitial,
@@ -120,10 +123,38 @@ function VendorRow({ vendor }: { vendor: ApiVendor }) {
   );
 }
 
+function NotificationItem({ incident }: { incident: ApiIncident }) {
+  const colors = useColors();
+  const latestUpdate = incident.updates?.[0];
+  const isResolved = incident.status === "RESOLVED" || incident.status === "COMPLETED";
+  const impactLabel = incident.impact !== "NONE" ? `${incident.impact} incident` : "";
+  const prefix = isResolved ? "RESOLVED" : impactLabel ? `${impactLabel}` : "";
+  const vendorName = getIncidentVendorName(incident);
+
+  return (
+    <View style={[styles.notifItem, { borderBottomColor: colors.border }]}>
+      <View style={styles.notifHeader}>
+        <Text style={[styles.notifTitle, { color: colors.foreground }]} numberOfLines={2}>
+          {prefix ? `${prefix}: ` : ""}{incident.title}
+        </Text>
+        <Text style={[styles.notifTime, { color: colors.mutedForeground }]}>
+          {timeAgo(latestUpdate?.publishedAt ?? incident.startedAt)}
+        </Text>
+      </View>
+      {latestUpdate && (
+        <Text style={[styles.notifBody, { color: colors.mutedForeground }]} numberOfLines={2}>
+          {latestUpdate.body}
+        </Text>
+      )}
+    </View>
+  );
+}
+
 export default function DashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [notifVisible, setNotifVisible] = useState(false);
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["dashboard"],
@@ -131,9 +162,16 @@ export default function DashboardScreen() {
     refetchInterval: 30000,
   });
 
+  const { data: recentData } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => fetchIncidents({ limit: 20 }),
+    refetchInterval: 30000,
+  });
+
   const summary = data?.summary;
   const vendors = data?.vendors ?? [];
   const activeIncidents = data?.activeIncidents ?? [];
+  const notifications = recentData?.incidents ?? [];
 
   const systemStatus = React.useMemo(() => {
     if (!summary)
@@ -185,7 +223,7 @@ export default function DashboardScreen() {
         ]}
       >
         <Text style={[styles.headerTitle, { color: colors.primary }]}>StatusCatch</Text>
-        <Pressable style={styles.bellBtn}>
+        <Pressable style={styles.bellBtn} onPress={() => setNotifVisible(true)}>
           {Platform.OS === "ios" ? (
             <SymbolView name="bell.badge" tintColor={colors.primary} size={22} />
           ) : (
@@ -302,6 +340,38 @@ export default function DashboardScreen() {
           vendors.map((vendor) => <VendorRow key={vendor.id} vendor={vendor} />)
         )}
       </ScrollView>
+
+      <Modal visible={notifVisible} transparent animationType="slide">
+        <Pressable style={styles.notifOverlay} onPress={() => setNotifVisible(false)}>
+          <Pressable
+            style={[styles.notifSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}
+            onPress={() => {}}
+          >
+            <View style={[styles.notifHandle, { backgroundColor: colors.border }]} />
+            <View style={styles.notifSheetHeader}>
+              <Text style={[styles.notifSheetTitle, { color: colors.foreground }]}>Notifications</Text>
+              <Pressable onPress={() => setNotifVisible(false)}>
+                <Feather name="x" size={20} color={colors.mutedForeground} />
+              </Pressable>
+            </View>
+            {notifications.length === 0 ? (
+              <View style={styles.notifEmpty}>
+                <Feather name="bell" size={32} color={colors.mutedForeground} />
+                <Text style={[styles.notifEmptyText, { color: colors.mutedForeground }]}>
+                  No recent notifications
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={notifications}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => <NotificationItem incident={item} />}
+                style={styles.notifList}
+              />
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -375,4 +445,47 @@ const styles = StyleSheet.create({
   errorSub: { fontSize: 14, textAlign: "center" },
   retryBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10, marginTop: 8 },
   retryBtnText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  notifOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  notifSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "75%",
+  },
+  notifHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  notifSheetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  notifSheetTitle: { fontSize: 20, fontWeight: "700" },
+  notifList: { paddingHorizontal: 20 },
+  notifItem: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  notifHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 4,
+  },
+  notifTitle: { fontSize: 15, fontWeight: "600", flex: 1, lineHeight: 21 },
+  notifTime: { fontSize: 12, marginTop: 2 },
+  notifBody: { fontSize: 13, lineHeight: 18 },
+  notifEmpty: { padding: 40, alignItems: "center", gap: 10 },
+  notifEmptyText: { fontSize: 15 },
 });

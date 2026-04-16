@@ -83,7 +83,7 @@ export default function VendorsScreen() {
           {
             backgroundColor: colors.card,
             borderBottomColor: colors.border,
-            paddingTop: Platform.OS === "web" ? 67 : 12,
+            paddingTop: Platform.OS === "web" ? 67 : insets.top + 12,
           },
         ]}
       >

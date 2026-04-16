@@ -95,7 +95,7 @@ export default function AlertsScreen() {
           styles.list,
           {
             paddingBottom: insets.bottom + 120,
-            paddingTop: Platform.OS === "web" ? 67 : 16,
+            paddingTop: Platform.OS === "web" ? 67 : insets.top + 16,
           },
         ]}
         scrollEnabled={alertRules.length > 0}

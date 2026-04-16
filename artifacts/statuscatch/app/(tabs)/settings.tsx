@@ -87,7 +87,7 @@ export default function SettingsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={[
         styles.content,
-        { paddingBottom: insets.bottom + 110, paddingTop: Platform.OS === "web" ? 67 : 20 },
+        { paddingBottom: insets.bottom + 110, paddingTop: Platform.OS === "web" ? 67 : insets.top + 20 },
       ]}
     >
       <View style={[styles.connectedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
