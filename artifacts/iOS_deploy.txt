@@ -1,0 +1,13 @@
+steps to deploy ios app
+1. download zip from replit, extract to C:\webapps\
+2. cd to artifacts/statuscatch 
+  npm install
+3. Build
+  eas build --platform ios
+4. Submit
+  eas submit --platform ios
+
+  or combine
+eas build --platform ios --auto-submit
+
+Before building, bump the build number in app.json so TestFlight shows it as a new version. I can do that for you now if you'd like.
