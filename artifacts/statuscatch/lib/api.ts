@@ -118,9 +118,13 @@ export interface ApiIncident {
   startedAt: string;
   resolvedAt: string | null;
   externalUrl: string | null;
-  vendorSubscription: {
-    vendorCatalog: { name: string; logoUrl: string | null } | null;
-  };
+  vendorSubscription?: {
+    vendorCatalog?: { name: string; logoUrl: string | null } | null;
+    name?: string | null;
+  } | null;
+  vendorCatalog?: { name: string; logoUrl: string | null } | null;
+  vendor?: { name?: string | null; vendorCatalog?: { name: string } | null } | null;
+  vendorName?: string | null;
   updates: ApiIncidentUpdate[];
   _count?: { updates: number };
 }
@@ -219,5 +223,15 @@ export function getVendorColor(vendor: ApiVendor): string {
 }
 
 export function getIncidentVendorName(incident: ApiIncident): string {
-  return incident.vendorSubscription?.vendorCatalog?.name ?? "Unknown";
+  const anyInc = incident as any;
+  return (
+    anyInc.vendorSubscription?.customName ||
+    anyInc.vendorSubscription?.vendorCatalog?.name ||
+    anyInc.vendorSubscription?.name ||
+    anyInc.vendorCatalog?.name ||
+    anyInc.vendor?.vendorCatalog?.name ||
+    anyInc.vendor?.name ||
+    anyInc.vendorName ||
+    "Unknown"
+  );
 }
