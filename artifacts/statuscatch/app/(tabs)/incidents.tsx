@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -54,14 +54,21 @@ function timeAgo(iso: string): string {
 
 function IncidentCard({ incident }: { incident: ApiIncident }) {
   const colors = useColors();
+  const router = useRouter();
   const impactColor = IMPACT_COLORS[incident.impact] ?? "#6B7280";
   const vendorName = getIncidentVendorName(incident);
 
   return (
-    <View
-      style={[
+    <Pressable
+      onPress={() => router.push(`/incident/${incident.id}`)}
+      style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.card, borderColor: colors.border, borderLeftColor: impactColor },
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          borderLeftColor: impactColor,
+          opacity: pressed ? 0.7 : 1,
+        },
       ]}
     >
       <View style={styles.cardHeader}>
@@ -90,7 +97,7 @@ function IncidentCard({ incident }: { incident: ApiIncident }) {
           {timeAgo(incident.startedAt)}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

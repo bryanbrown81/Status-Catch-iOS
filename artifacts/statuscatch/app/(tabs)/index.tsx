@@ -65,14 +65,21 @@ function SectionHeader({ title, count }: { title: string; count?: number }) {
 
 function IncidentRow({ incident }: { incident: ApiIncident }) {
   const colors = useColors();
+  const router = useRouter();
   const impactColor = IMPACT_COLORS[incident.impact] ?? "#6B7280";
   const vendorName = getIncidentVendorName(incident);
 
   return (
-    <View
-      style={[
+    <Pressable
+      onPress={() => router.push(`/incident/${incident.id}`)}
+      style={({ pressed }) => [
         styles.incidentCard,
-        { backgroundColor: colors.card, borderColor: colors.border, borderLeftColor: impactColor },
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          borderLeftColor: impactColor,
+          opacity: pressed ? 0.7 : 1,
+        },
       ]}
     >
       <View style={styles.incidentHeader}>
@@ -96,7 +103,7 @@ function IncidentRow({ incident }: { incident: ApiIncident }) {
           {timeAgo(incident.startedAt)}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -123,7 +130,7 @@ function VendorRow({ vendor }: { vendor: ApiVendor }) {
   );
 }
 
-function NotificationItem({ incident }: { incident: ApiIncident }) {
+function NotificationItem({ incident, onPress }: { incident: ApiIncident; onPress: () => void }) {
   const colors = useColors();
   const latestUpdate = incident.updates?.[0];
   const isResolved = incident.status === "RESOLVED" || incident.status === "COMPLETED";
@@ -132,7 +139,13 @@ function NotificationItem({ incident }: { incident: ApiIncident }) {
   const vendorName = getIncidentVendorName(incident);
 
   return (
-    <View style={[styles.notifItem, { borderBottomColor: colors.border }]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.notifItem,
+        { borderBottomColor: colors.border, opacity: pressed ? 0.6 : 1 },
+      ]}
+    >
       <View style={styles.notifHeader}>
         <Text style={[styles.notifTitle, { color: colors.foreground }]} numberOfLines={2}>
           {prefix ? `${prefix}: ` : ""}{incident.title}
@@ -146,7 +159,7 @@ function NotificationItem({ incident }: { incident: ApiIncident }) {
           {latestUpdate.body}
         </Text>
       )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -365,7 +378,15 @@ export default function DashboardScreen() {
               <FlatList
                 data={notifications}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <NotificationItem incident={item} />}
+                renderItem={({ item }) => (
+                  <NotificationItem
+                    incident={item}
+                    onPress={() => {
+                      setNotifVisible(false);
+                      router.push(`/incident/${item.id}`);
+                    }}
+                  />
+                )}
                 style={styles.notifList}
               />
             )}
