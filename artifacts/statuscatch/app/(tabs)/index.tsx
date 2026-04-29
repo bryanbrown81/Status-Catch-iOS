@@ -22,6 +22,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { CATEGORY_LABELS } from "@/constants/vendors";
 import type { VendorStatus } from "@/constants/vendors";
 import { useColors } from "@/hooks/useColors";
+import { useNotifications } from "@/hooks/useNotifications";
 import {
   fetchDashboard,
   fetchIncidents,
@@ -130,7 +131,15 @@ function VendorRow({ vendor }: { vendor: ApiVendor }) {
   );
 }
 
-function NotificationItem({ incident, onPress }: { incident: ApiIncident; onPress: () => void }) {
+function NotificationItem({
+  incident,
+  onPress,
+  onDismiss,
+}: {
+  incident: ApiIncident;
+  onPress: () => void;
+  onDismiss: () => void;
+}) {
   const colors = useColors();
   const latestUpdate = incident.updates?.[0];
   const isResolved = incident.status === "RESOLVED" || incident.status === "COMPLETED";
@@ -139,27 +148,34 @@ function NotificationItem({ incident, onPress }: { incident: ApiIncident; onPres
   const vendorName = getIncidentVendorName(incident);
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.notifItem,
-        { borderBottomColor: colors.border, opacity: pressed ? 0.6 : 1 },
-      ]}
-    >
-      <View style={styles.notifHeader}>
-        <Text style={[styles.notifTitle, { color: colors.foreground }]} numberOfLines={2}>
-          {prefix ? `${prefix}: ` : ""}{incident.title}
-        </Text>
-        <Text style={[styles.notifTime, { color: colors.mutedForeground }]}>
-          {timeAgo(latestUpdate?.publishedAt ?? incident.startedAt)}
-        </Text>
-      </View>
-      {latestUpdate && (
-        <Text style={[styles.notifBody, { color: colors.mutedForeground }]} numberOfLines={2}>
-          {latestUpdate.body}
-        </Text>
-      )}
-    </Pressable>
+    <View style={[styles.notifItem, { borderBottomColor: colors.border }]}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.notifContent, { opacity: pressed ? 0.6 : 1 }]}
+      >
+        <View style={styles.notifHeader}>
+          <Text style={[styles.notifTitle, { color: colors.foreground }]} numberOfLines={2}>
+            {prefix ? `${prefix}: ` : ""}{incident.title}
+          </Text>
+          <Text style={[styles.notifTime, { color: colors.mutedForeground }]}>
+            {timeAgo(latestUpdate?.publishedAt ?? incident.startedAt)}
+          </Text>
+        </View>
+        <Text style={[styles.notifVendor, { color: colors.mutedForeground }]}>{vendorName}</Text>
+        {latestUpdate && (
+          <Text style={[styles.notifBody, { color: colors.mutedForeground }]} numberOfLines={2}>
+            {latestUpdate.body}
+          </Text>
+        )}
+      </Pressable>
+      <Pressable
+        onPress={onDismiss}
+        hitSlop={10}
+        style={({ pressed }) => [styles.notifDismiss, { opacity: pressed ? 0.5 : 1 }]}
+      >
+        <Feather name="x" size={18} color={colors.mutedForeground} />
+      </Pressable>
+    </View>
   );
 }
 
@@ -184,7 +200,8 @@ export default function DashboardScreen() {
   const summary = data?.summary;
   const vendors = data?.vendors ?? [];
   const activeIncidents = data?.activeIncidents ?? [];
-  const notifications = recentData?.incidents ?? [];
+  const allRecent = recentData?.incidents ?? [];
+  const { visible: notifications, markRead, markAllRead, unreadCount } = useNotifications(allRecent);
 
   const systemStatus = React.useMemo(() => {
     if (!summary)
@@ -242,9 +259,9 @@ export default function DashboardScreen() {
           ) : (
             <Feather name="bell" size={22} color={colors.primary} />
           )}
-          {(summary?.activeIncidentsCount ?? 0) > 0 && (
+          {unreadCount > 0 && (
             <View style={styles.bellBadge}>
-              <Text style={styles.bellBadgeText}>{summary?.activeIncidentsCount}</Text>
+              <Text style={styles.bellBadgeText}>{unreadCount}</Text>
             </View>
           )}
         </Pressable>
@@ -363,15 +380,22 @@ export default function DashboardScreen() {
             <View style={[styles.notifHandle, { backgroundColor: colors.border }]} />
             <View style={styles.notifSheetHeader}>
               <Text style={[styles.notifSheetTitle, { color: colors.foreground }]}>Notifications</Text>
-              <Pressable onPress={() => setNotifVisible(false)}>
-                <Feather name="x" size={20} color={colors.mutedForeground} />
-              </Pressable>
+              <View style={styles.notifHeaderActions}>
+                {notifications.length > 0 && (
+                  <Pressable onPress={markAllRead} hitSlop={6}>
+                    <Text style={[styles.notifMarkAll, { color: colors.primary }]}>Mark all read</Text>
+                  </Pressable>
+                )}
+                <Pressable onPress={() => setNotifVisible(false)} hitSlop={6}>
+                  <Feather name="x" size={20} color={colors.mutedForeground} />
+                </Pressable>
+              </View>
             </View>
             {notifications.length === 0 ? (
               <View style={styles.notifEmpty}>
                 <Feather name="bell" size={32} color={colors.mutedForeground} />
                 <Text style={[styles.notifEmptyText, { color: colors.mutedForeground }]}>
-                  No recent notifications
+                  You're all caught up
                 </Text>
               </View>
             ) : (
@@ -382,9 +406,11 @@ export default function DashboardScreen() {
                   <NotificationItem
                     incident={item}
                     onPress={() => {
+                      markRead(item);
                       setNotifVisible(false);
                       router.push(`/incident/${item.id}`);
                     }}
+                    onDismiss={() => markRead(item)}
                   />
                 )}
                 style={styles.notifList}
@@ -492,20 +518,28 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   notifSheetTitle: { fontSize: 20, fontWeight: "700" },
+  notifHeaderActions: { flexDirection: "row", alignItems: "center", gap: 16 },
+  notifMarkAll: { fontSize: 14, fontWeight: "600" },
   notifList: { paddingHorizontal: 20 },
   notifItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
     paddingVertical: 14,
     borderBottomWidth: 1,
+    gap: 8,
   },
+  notifContent: { flex: 1 },
+  notifDismiss: { padding: 4, marginTop: 2 },
   notifHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     gap: 12,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   notifTitle: { fontSize: 15, fontWeight: "600", flex: 1, lineHeight: 21 },
   notifTime: { fontSize: 12, marginTop: 2 },
+  notifVendor: { fontSize: 11, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 },
   notifBody: { fontSize: 13, lineHeight: 18 },
   notifEmpty: { padding: 40, alignItems: "center", gap: 10 },
   notifEmptyText: { fontSize: 15 },
