@@ -118,7 +118,7 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title="ABOUT">
-        <SettingRow label="Version" value="1.0.0" />
+        <SettingRow label="Version" value="1.3.0" />
         <SettingRow label="Platform" value={Platform.OS === "ios" ? "iOS" : Platform.OS === "android" ? "Android" : "Web"} />
         <SettingRow label="StatusCatch Web" value="statuscatch.up.railway.app" isLast />
       </Section>

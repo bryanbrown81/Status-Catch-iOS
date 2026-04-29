@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { ApiIncident } from "@/lib/api";
 
@@ -9,7 +9,12 @@ type ReadMap = Record<string, string>;
 
 function getNotifTimestamp(incident: ApiIncident): string {
   const latest = incident.updates?.[0]?.publishedAt;
-  return latest ?? incident.startedAt;
+  return latest ?? incident.startedAt ?? new Date(0).toISOString();
+}
+
+function safeTime(iso: string): number {
+  const t = new Date(iso).getTime();
+  return Number.isFinite(t) ? t : 0;
 }
 
 export function useNotifications(incidents: ApiIncident[]) {
@@ -38,19 +43,16 @@ export function useNotifications(incidents: ApiIncident[]) {
     }
   }, []);
 
-  const visible = hydrated
-    ? incidents
-        .filter((inc) => {
-          const lastRead = readMap[inc.id];
-          if (!lastRead) return true;
-          return new Date(getNotifTimestamp(inc)).getTime() > new Date(lastRead).getTime();
-        })
-        .sort(
-          (a, b) =>
-            new Date(getNotifTimestamp(b)).getTime() -
-            new Date(getNotifTimestamp(a)).getTime(),
-        )
-    : [];
+  const visible = useMemo(() => {
+    if (!hydrated) return [];
+    return incidents
+      .filter((inc) => {
+        const lastRead = readMap[inc.id];
+        if (!lastRead) return true;
+        return safeTime(getNotifTimestamp(inc)) > safeTime(lastRead);
+      })
+      .sort((a, b) => safeTime(getNotifTimestamp(b)) - safeTime(getNotifTimestamp(a)));
+  }, [incidents, readMap, hydrated]);
 
   const markRead = useCallback(
     (incident: ApiIncident) => {

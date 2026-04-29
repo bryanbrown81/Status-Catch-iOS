@@ -23,6 +23,7 @@ import { CATEGORY_LABELS } from "@/constants/vendors";
 import type { VendorStatus } from "@/constants/vendors";
 import { useColors } from "@/hooks/useColors";
 import { useNotifications } from "@/hooks/useNotifications";
+import { setBadgeCount } from "@/lib/push";
 import {
   fetchDashboard,
   fetchIncidents,
@@ -193,7 +194,7 @@ export default function DashboardScreen() {
 
   const { data: recentData } = useQuery({
     queryKey: ["notifications"],
-    queryFn: () => fetchIncidents({ limit: 20 }),
+    queryFn: () => fetchIncidents({ limit: 20, type: "INCIDENT" }),
     refetchInterval: 30000,
   });
 
@@ -202,6 +203,10 @@ export default function DashboardScreen() {
   const activeIncidents = data?.activeIncidents ?? [];
   const allRecent = recentData?.incidents ?? [];
   const { visible: notifications, markRead, markAllRead, unreadCount } = useNotifications(allRecent);
+
+  React.useEffect(() => {
+    void setBadgeCount(unreadCount);
+  }, [unreadCount]);
 
   const systemStatus = React.useMemo(() => {
     if (!summary)

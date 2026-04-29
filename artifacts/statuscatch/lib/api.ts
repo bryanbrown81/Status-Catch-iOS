@@ -187,6 +187,24 @@ export async function fetchIncidentDetail(id: string): Promise<IncidentDetailRes
 
 export type TokenValidationResult = "valid" | "unauthorized" | "unreachable";
 
+export async function registerPushToken(payload: {
+  token: string;
+  platform: string;
+  deviceName: string | null;
+}): Promise<void> {
+  await apiFetch("/api/mobile/push-token", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function unregisterPushToken(token: string): Promise<void> {
+  await apiFetch("/api/mobile/push-token", {
+    method: "DELETE",
+    body: JSON.stringify({ token }),
+  });
+}
+
 export async function validateToken(): Promise<TokenValidationResult> {
   try {
     await fetchDashboard();
