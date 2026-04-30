@@ -100,7 +100,9 @@ async function sendIncidentPush(incident: {
 
   const messages = devices.map((d) => ({
     to: d.pushToken,
-    sound: "default",
+    // Use "default" for the system sound, OR a custom filename bundled with the app
+    // (see artifacts/statuscatch/assets/sounds/). Custom sounds require an EAS rebuild.
+    sound: "alert.wav",
     title: `${incident.vendorName}: ${incident.impact}`,
     body: incident.title,
     data: { incidentId: incident.id },
