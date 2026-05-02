@@ -43,7 +43,11 @@ export function setOnUnauthorized(cb: OnUnauthorized | null) {
   _onUnauthorized = cb;
 }
 
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+interface ApiFetchOptions extends RequestInit {
+  skipUnauthorizedHandler?: boolean;
+}
+
+async function apiFetch<T>(path: string, options?: ApiFetchOptions): Promise<T> {
   const token = await getToken();
 
   let res: Response;
@@ -61,7 +65,9 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   if (res.status === 401) {
-    _onUnauthorized?.();
+    if (!options?.skipUnauthorizedHandler) {
+      _onUnauthorized?.();
+    }
     throw new ApiError("Unauthorized", 401);
   }
 
@@ -195,6 +201,7 @@ export async function registerPushToken(payload: {
   await apiFetch("/api/mobile/push-token", {
     method: "POST",
     body: JSON.stringify(payload),
+    skipUnauthorizedHandler: true,
   });
 }
 
@@ -202,6 +209,7 @@ export async function unregisterPushToken(token: string): Promise<void> {
   await apiFetch("/api/mobile/push-token", {
     method: "DELETE",
     body: JSON.stringify({ token }),
+    skipUnauthorizedHandler: true,
   });
 }
 

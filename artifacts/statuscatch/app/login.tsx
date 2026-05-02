@@ -11,7 +11,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,9 +26,7 @@ export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { isAuthenticated, login } = useAuth();
-  const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showManualEntry, setShowManualEntry] = useState(false);
 
   if (isAuthenticated) return <Redirect href="/" />;
 
@@ -80,32 +77,6 @@ export default function LoginScreen() {
     }
   }
 
-  async function handleManualLogin() {
-    const trimmed = token.trim();
-    if (!trimmed) return;
-    setLoading(true);
-    try {
-      const result = await login(trimmed);
-      if (result === "valid") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else if (result === "unauthorized") {
-        Alert.alert(
-          "Invalid Token",
-          "The token you entered is invalid or expired. Please generate a new one from the web app.",
-        );
-      } else {
-        Alert.alert(
-          "Server Unreachable",
-          "Could not reach the StatusCatch server. The token has been saved and will be verified when the server is available.",
-        );
-      }
-    } catch {
-      Alert.alert("Connection Error", "An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: colors.background }]}
@@ -135,7 +106,7 @@ export default function LoginScreen() {
           onPress={handleWebLogin}
           disabled={loading}
         >
-          {loading && !showManualEntry ? (
+          {loading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
             <>
@@ -145,70 +116,6 @@ export default function LoginScreen() {
           )}
         </Pressable>
 
-        <View style={styles.orRow}>
-          <View style={[styles.orLine, { backgroundColor: colors.border }]} />
-          <Text style={[styles.orText, { color: colors.mutedForeground }]}>or</Text>
-          <View style={[styles.orLine, { backgroundColor: colors.border }]} />
-        </View>
-
-        <Pressable
-          style={[styles.manualToggle, { borderColor: colors.border }]}
-          onPress={() => setShowManualEntry(!showManualEntry)}
-        >
-          <Feather name="key" size={16} color={colors.mutedForeground} />
-          <Text style={[styles.manualToggleText, { color: colors.foreground }]}>
-            Enter API token manually
-          </Text>
-          <Feather
-            name={showManualEntry ? "chevron-up" : "chevron-down"}
-            size={16}
-            color={colors.mutedForeground}
-          />
-        </Pressable>
-
-        {showManualEntry && (
-          <View style={styles.manualSection}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>API TOKEN</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                  color: colors.foreground,
-                },
-              ]}
-              placeholder="Paste your API token here"
-              placeholderTextColor={colors.mutedForeground}
-              value={token}
-              onChangeText={setToken}
-              autoCapitalize="none"
-              autoCorrect={false}
-              secureTextEntry
-              editable={!loading}
-            />
-            <Pressable
-              style={[
-                styles.connectBtn,
-                {
-                  backgroundColor: colors.primary,
-                  opacity: token.trim() && !loading ? 1 : 0.5,
-                },
-              ]}
-              onPress={handleManualLogin}
-              disabled={!token.trim() || loading}
-            >
-              {loading && showManualEntry ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.connectBtnText}>Connect</Text>
-              )}
-            </Pressable>
-            <Text style={[styles.helpText, { color: colors.mutedForeground }]}>
-              Generate a token from the StatusCatch web app Settings page. The token is shown once — copy it before closing.
-            </Text>
-          </View>
-        )}
       </View>
     </ScrollView>
   );
@@ -232,43 +139,4 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   primaryBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  orRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginVertical: 24,
-  },
-  orLine: { flex: 1, height: 1 },
-  orText: { fontSize: 13, fontWeight: "500" },
-  manualToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  manualToggleText: { flex: 1, fontSize: 15, fontWeight: "600" },
-  manualSection: { marginTop: 16 },
-  label: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.8,
-    marginBottom: 8,
-    textTransform: "uppercase",
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  connectBtn: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  connectBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  helpText: { fontSize: 13, lineHeight: 19, marginTop: 14 },
 });
