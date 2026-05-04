@@ -96,6 +96,7 @@ export default function IncidentDetailScreen() {
     );
   }
 
+  const incidentUrl = incident.sourceUrl || incident.externalUrl || null;
   const impactColor = IMPACT_COLORS[incident.impact] ?? "#6B7280";
   const vendorName = getIncidentVendorName(incident);
   const isResolved = incident.status === "RESOLVED" || incident.status === "COMPLETED";
@@ -124,10 +125,10 @@ export default function IncidentDetailScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {incident.externalUrl ? (
+        {incidentUrl ? (
           <Pressable
             style={styles.vendorRow}
-            onPress={() => incident.externalUrl && Linking.openURL(incident.externalUrl)}
+            onPress={() => Linking.openURL(incidentUrl)}
             hitSlop={8}
           >
             <Text style={[styles.vendorLabel, { color: colors.mutedForeground }]}>{vendorName}</Text>

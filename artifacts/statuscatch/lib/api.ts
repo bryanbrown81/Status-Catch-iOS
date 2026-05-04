@@ -124,6 +124,9 @@ export interface ApiIncident {
   startedAt: string;
   resolvedAt: string | null;
   externalUrl: string | null;
+  sourceUrl?: string | null;
+  source?: string | null;
+  affectedComponents?: string[] | null;
   vendorSubscription?: {
     vendorCatalog?: { name: string; logoUrl: string | null } | null;
     name?: string | null;
