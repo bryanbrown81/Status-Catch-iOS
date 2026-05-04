@@ -22,6 +22,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "exclamationmark.triangle", selected: "exclamationmark.triangle.fill" }} />
         <Label>Incidents</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="calendar">
+        <Icon sf={{ default: "calendar", selected: "calendar" }} />
+        <Label>Calendar</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="vendors">
         <Icon sf={{ default: "externaldrive", selected: "externaldrive.fill" }} />
         <Label>Vendors</Label>
@@ -99,6 +103,19 @@ function ClassicTabLayout() {
               <SymbolView name="exclamationmark.triangle.fill" tintColor={color} size={22} />
             ) : (
               <Feather name="alert-triangle" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="calendar"
+        options={{
+          title: "Calendar",
+          headerShown: false,
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="calendar" tintColor={color} size={22} />
+            ) : (
+              <Feather name="calendar" size={22} color={color} />
             ),
         }}
       />
