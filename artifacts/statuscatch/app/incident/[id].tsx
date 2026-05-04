@@ -121,19 +121,21 @@ export default function IncidentDetailScreen() {
           <Feather name="chevron-left" size={26} color={colors.primary} />
           <Text style={[styles.backText, { color: colors.primary }]}>Back</Text>
         </Pressable>
-        {incident.externalUrl && (
-          <Pressable
-            style={styles.linkBtn}
-            onPress={() => incident.externalUrl && Linking.openURL(incident.externalUrl)}
-            hitSlop={12}
-          >
-            <Feather name="external-link" size={20} color={colors.primary} />
-          </Pressable>
-        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={[styles.vendorLabel, { color: colors.mutedForeground }]}>{vendorName.toUpperCase()}</Text>
+        {incident.externalUrl ? (
+          <Pressable
+            style={styles.vendorRow}
+            onPress={() => incident.externalUrl && Linking.openURL(incident.externalUrl)}
+            hitSlop={8}
+          >
+            <Text style={[styles.vendorLabel, { color: colors.mutedForeground }]}>{vendorName}</Text>
+            <Feather name="external-link" size={13} color={colors.mutedForeground} style={styles.vendorLinkIcon} />
+          </Pressable>
+        ) : (
+          <Text style={[styles.vendorLabel, { color: colors.mutedForeground }]}>{vendorName}</Text>
+        )}
         <Text style={[styles.title, { color: colors.foreground }]}>{incident.title}</Text>
 
         <View style={styles.badgeRow}>
@@ -227,9 +229,10 @@ const styles = StyleSheet.create({
   },
   backBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
   backText: { fontSize: 17, marginLeft: -2 },
-  linkBtn: { padding: 6 },
   scroll: { padding: 18, paddingBottom: 40 },
-  vendorLabel: { fontSize: 12, fontWeight: "600", letterSpacing: 0.8, marginBottom: 6 },
+  vendorRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 6 },
+  vendorLabel: { fontSize: 13, fontWeight: "600", letterSpacing: 0.4 },
+  vendorLinkIcon: { marginTop: 1 },
   title: { fontSize: 22, fontWeight: "700", lineHeight: 28, marginBottom: 14 },
   badgeRow: { flexDirection: "row", gap: 8, marginBottom: 18 },
   badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
