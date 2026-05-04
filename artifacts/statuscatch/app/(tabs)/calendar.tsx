@@ -24,6 +24,22 @@ const IMPACT_COLORS: Record<string, string> = {
   CRITICAL: "#EF4444",
 };
 
+const STATUS_COLOR_SCHEDULED = "#3B82F6";
+const STATUS_COLOR_IN_PROGRESS = "#F59E0B";
+const STATUS_COLOR_COMPLETED = "#22C55E";
+
+function statusGroupColor(status: string): string {
+  switch (status) {
+    case "SCHEDULED":
+      return STATUS_COLOR_SCHEDULED;
+    case "RESOLVED":
+    case "COMPLETED":
+      return STATUS_COLOR_COMPLETED;
+    default:
+      return STATUS_COLOR_IN_PROGRESS;
+  }
+}
+
 const STATUS_LABELS: Record<string, string> = {
   INVESTIGATING: "Investigating",
   IDENTIFIED: "Identified",
@@ -212,9 +228,9 @@ export default function CalendarScreen() {
 
           <View style={styles.legendRow}>
             {[
-              { label: "Critical", color: IMPACT_COLORS.CRITICAL },
-              { label: "Major", color: IMPACT_COLORS.MAJOR },
-              { label: "Minor", color: IMPACT_COLORS.MINOR },
+              { label: "Scheduled", color: STATUS_COLOR_SCHEDULED },
+              { label: "In Progress", color: STATUS_COLOR_IN_PROGRESS },
+              { label: "Completed", color: STATUS_COLOR_COMPLETED },
             ].map((item) => (
               <View key={item.label} style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: item.color }]} />
@@ -232,7 +248,7 @@ export default function CalendarScreen() {
               const isSelected = isSameDay(cell.date, selectedDate);
               const isToday = isSameDay(cell.date, today);
               const dotColors = Array.from(
-                new Set(events.map((e) => IMPACT_COLORS[e.impact] ?? "#6B7280")),
+                new Set(events.map((e) => statusGroupColor(e.status))),
               ).slice(0, 3);
 
               return (
