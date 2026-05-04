@@ -115,11 +115,6 @@ export default function CalendarScreen() {
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<Date>(today);
 
-  const incidentsQuery = useQuery({
-    queryKey: ["calendar", "incidents"],
-    queryFn: () => fetchIncidents({ type: "INCIDENT", limit: 100 }),
-    refetchInterval: 60000,
-  });
   const maintenanceQuery = useQuery({
     queryKey: ["calendar", "maintenance"],
     queryFn: () => fetchIncidents({ type: "MAINTENANCE", limit: 100 }),
@@ -127,10 +122,8 @@ export default function CalendarScreen() {
   });
 
   const allEvents: ApiIncident[] = useMemo(() => {
-    const inc = incidentsQuery.data?.incidents ?? [];
-    const maint = maintenanceQuery.data?.incidents ?? [];
-    return [...inc, ...maint];
-  }, [incidentsQuery.data, maintenanceQuery.data]);
+    return maintenanceQuery.data?.incidents ?? [];
+  }, [maintenanceQuery.data]);
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, ApiIncident[]>();
@@ -150,7 +143,7 @@ export default function CalendarScreen() {
     (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
   );
 
-  const isLoading = incidentsQuery.isLoading || maintenanceQuery.isLoading;
+  const isLoading = maintenanceQuery.isLoading;
 
   function goPrevMonth() {
     if (viewMonth === 0) {
