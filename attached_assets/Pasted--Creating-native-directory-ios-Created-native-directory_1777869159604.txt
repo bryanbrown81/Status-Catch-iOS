@@ -1,0 +1,19 @@
+- Creating native directory (./ios)
+✔ Created native directory
+- Updating package.json
+✔ Updated package.json
+- Running prebuild
+✖ Prebuild failed
+Error: [ios.xcodeproj]: withIosXcodeprojBaseMod: ENOENT: no such file or directory, copyfile '/Users/expo/workingdir/build/artifacts/statuscatch/assets/sounds/alert.wav' -> '/Users/expo/workingdir/build/artifacts/statuscatch/ios/StatusCatch/alert.wav'
+Error: [ios.xcodeproj]: withIosXcodeprojBaseMod: ENOENT: no such file or directory, copyfile '/Users/expo/workingdir/build/artifacts/statuscatch/assets/sounds/alert.wav' -> '/Users/expo/workingdir/build/artifacts/statuscatch/ios/StatusCatch/alert.wav'
+    at copyFileSync (node:fs:3034:11)
+    at setNotificationSounds (/Users/expo/workingdir/build/node_modules/.pnpm/expo-notifications@0.32.17_expo@54.0.33_react-native@0.81.5_@babel+core@7.29.0_@types+r_4e411590e6dcee2d4a1fc21814707207/node_modules/expo-notifications/plugin/build/withNotificationsIOS.js:69:31)
+    at /Users/expo/workingdir/build/node_modules/.pnpm/expo-notifications@0.32.17_expo@54.0.33_react-native@0.81.5_@babel+core@7.29.0_@types+r_4e411590e6dcee2d4a1fc21814707207/node_modules/expo-notifications/plugin/build/withNotificationsIOS.js:43:9
+    at action (/Users/expo/workingdir/build/node_modules/.pnpm/@expo+config-plugins@54.0.4/node_modules/@expo/config-plugins/build/plugins/withMod.js:199:29)
+    at interceptingMod (/Users/expo/workingdir/build/node_modules/.pnpm/@expo+config-plugins@54.0.4/node_modules/@expo/config-plugins/build/plugins/withMod.js:104:27)
+    at action (/Users/expo/workingdir/build/node_modules/.pnpm/@expo+config-plugins@54.0.4/node_modules/@expo/config-plugins/build/plugins/withMod.js:204:14)
+    at async interceptingMod (/Users/expo/workingdir/build/node_modules/.pnpm/@expo+config-plugins@54.0.4/node_modules/@expo/config-plugins/build/plugins/withMod.js:104:21)
+    at async interceptingMod (/Users/expo/workingdir/build/node_modules/.pnpm/@expo+config-plugins@54.0.4/node_modules/@expo/config-plugins/build/plugins/withMod.js:104:21)
+    at async interceptingMod (/Users/expo/workingdir/build/node_modules/.pnpm/@expo+config-plugins@54.0.4/node_modules/@expo/config-plugins/build/plugins/withMod.js:104:21)
+    at async interceptingMod (/Users/expo/workingdir/build/node_modules/.pnpm/@expo+config-plugins@54.0.4/node_modules/@expo/config-plugins/build/plugins/withMod.js:104:21)
+pnpm expo prebuild --no-install --platform ios exited with non-zero code: 1
