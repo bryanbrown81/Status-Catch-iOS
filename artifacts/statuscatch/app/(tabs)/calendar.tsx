@@ -210,6 +210,21 @@ export default function CalendarScreen() {
             ))}
           </View>
 
+          <View style={styles.legendRow}>
+            {[
+              { label: "Critical", color: IMPACT_COLORS.CRITICAL },
+              { label: "Major", color: IMPACT_COLORS.MAJOR },
+              { label: "Minor", color: IMPACT_COLORS.MINOR },
+            ].map((item) => (
+              <View key={item.label} style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+                <Text style={[styles.legendText, { color: colors.mutedForeground }]}>
+                  {item.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+
           <View style={styles.grid}>
             {cells.map((cell, idx) => {
               const key = dateKey(cell.date);
@@ -388,6 +403,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.5,
   },
+  legendRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 14,
+    marginBottom: 8,
+  },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 5 },
+  legendDot: { width: 7, height: 7, borderRadius: 4 },
+  legendText: { fontSize: 11, fontWeight: "600" },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
