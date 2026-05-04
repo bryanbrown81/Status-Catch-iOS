@@ -132,7 +132,7 @@ export default function IncidentDetailScreen() {
             hitSlop={8}
           >
             <Text style={[styles.vendorLabel, { color: colors.mutedForeground }]}>{vendorName}</Text>
-            <Feather name="external-link" size={13} color={colors.mutedForeground} style={styles.vendorLinkIcon} />
+            <Feather name="external-link" size={17} color={colors.mutedForeground} style={styles.vendorLinkIcon} />
           </Pressable>
         ) : (
           <Text style={[styles.vendorLabel, { color: colors.mutedForeground }]}>{vendorName}</Text>
@@ -231,8 +231,8 @@ const styles = StyleSheet.create({
   backBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
   backText: { fontSize: 17, marginLeft: -2 },
   scroll: { padding: 18, paddingBottom: 40 },
-  vendorRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 6 },
-  vendorLabel: { fontSize: 13, fontWeight: "600", letterSpacing: 0.4 },
+  vendorRow: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 8 },
+  vendorLabel: { fontSize: 16, fontWeight: "600", letterSpacing: 0.2 },
   vendorLinkIcon: { marginTop: 1 },
   title: { fontSize: 22, fontWeight: "700", lineHeight: 28, marginBottom: 14 },
   badgeRow: { flexDirection: "row", gap: 8, marginBottom: 18 },
